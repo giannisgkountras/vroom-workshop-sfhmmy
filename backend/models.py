@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -6,5 +6,5 @@ Base = declarative_base()
 
 class Team(Base):
     __tablename__ = "teams"
-    secret_key = Column(String, primary_key=True, index=True)
-    name = Column(String, nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True)

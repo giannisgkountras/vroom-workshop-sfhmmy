@@ -1,20 +1,30 @@
 import api from "./index";
 import { toast } from "react-toastify";
 
-const registerCall = async (teamName, secretKey) => {
+const registerCall = async (teamName) => {
     try {
-        const response = await api.post("register", { teamName, secretKey });
-        if (response?.status === "error") {
-            toast.error("Publish request failed:", response.message);
-        }
+        const response = await api.post("register", { teamName });
         if (response?.status === "success") {
             toast.success(response.message);
         }
         return response;
     } catch (error) {
-        toast.error(error.message);
-        return { status: "error", message: error.message };
+        console.log(error);
     }
 };
 
-export { registerCall };
+const joinCall = async (teamName) => {
+    try {
+        const response = await api.post("join", { teamName });
+
+        if (response?.status === "success") {
+            toast.success(response.message);
+        }
+
+        return response;
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+export { registerCall, joinCall };

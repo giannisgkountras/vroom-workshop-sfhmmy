@@ -3,7 +3,10 @@ import Navigation from "../components/Navigation";
 import CodeEditor from "../components/CodeEditor";
 
 const Submit = () => {
-    const [code, setCode] = useState("def path_planning():\n    pass\n");
+    const initialCode = "def path_planning():\n    pass\n";
+    const [code, setCode] = useState(
+        localStorage.getItem("code") || initialCode
+    );
     return (
         <>
             <Navigation
@@ -13,7 +16,15 @@ const Submit = () => {
                 ]}
             />
             <div className="flex flex-col items-center justify-center h-full w-full">
-                <CodeEditor initialData={code} setCode={setCode} />
+                <button
+                    onClick={() => {
+                        setCode(initialCode);
+                        localStorage.setItem("code", initialCode);
+                    }}
+                >
+                    Reset Code
+                </button>
+                <CodeEditor code={code} setCode={setCode} />
             </div>
         </>
     );

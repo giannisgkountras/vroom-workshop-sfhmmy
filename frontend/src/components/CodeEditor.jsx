@@ -1,18 +1,20 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-python";
 import "prismjs/themes/prism-dark.css";
 
-const CodeEditor = ({ initialData, setCode }) => {
-    const [localCode, setLocalCode] = useState(initialData);
+const CodeEditor = ({ code, setCode }) => {
     const editorRef = useRef(null);
 
     // Auto-closing pairs
     const pairs = {
         "{": "}",
         "[": "]",
-        '"': '"'
+        '"': '"',
+        "'": "'",
+        "(": ")",
+        "`": "`"
     };
 
     // Handle key presses for auto-closing
@@ -28,7 +30,7 @@ const CodeEditor = ({ initialData, setCode }) => {
             const closingChar = pairs[key];
             const newValue = before + key + closingChar + after;
 
-            setLocalCode(newValue);
+            setCode(newValue);
             // Use setTimeout to ensure cursor is set after state update
             setTimeout(() => {
                 target.selectionStart = start + 1;
@@ -37,8 +39,9 @@ const CodeEditor = ({ initialData, setCode }) => {
         }
     };
 
-    const handleCodeChange = (code) => {
-        setLocalCode(code);
+    const handleCodeChange = (localCode) => {
+        setCode(localCode);
+        localStorage.setItem("code", localCode);
     };
     return (
         <div className="mb-4 w-11/12 flex flex-col">
@@ -47,7 +50,7 @@ const CodeEditor = ({ initialData, setCode }) => {
             </h2>
             <Editor
                 ref={editorRef}
-                value={localCode}
+                value={code}
                 tabSize={4}
                 onValueChange={handleCodeChange}
                 onKeyDown={handleKeyDown} // Add auto-closing logic

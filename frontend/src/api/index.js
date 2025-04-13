@@ -16,7 +16,17 @@ const api = {
         try {
             return await rootApi.post(path, { json }).json();
         } catch (error) {
-            toast.error(error.message);
+            // Extract and parse the error JSON response
+            if (error.response) {
+                const errorData = await error.response.json();
+                toast.error(
+                    errorData.message || "An unexpected error occurred"
+                );
+                return { status: "error", message: errorData.message };
+            } else {
+                toast.error(error.message || "An unexpected error occurred");
+                return { status: "error", message: error.message };
+            }
         }
     },
     get: async (path) => {

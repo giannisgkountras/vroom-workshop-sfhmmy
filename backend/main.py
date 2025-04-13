@@ -1,10 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Security
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, constr
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 import os
-from models import Team
-from database import SessionLocal
+from models import Team, Base
+from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 
@@ -34,7 +35,6 @@ def get_api_key(api_key_header: str = Security(api_key_header)) -> str:
 
 class RegisterRequest(BaseModel):
     teamName: str
-    secretKey: str
 
 
 def get_db():
@@ -45,22 +45,55 @@ def get_db():
         db.close()
 
 
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
+
+
 @app.post("/register")
 def register_team(
     req: RegisterRequest,
     db: Session = Depends(get_db),
     api_key: str = Security(get_api_key),
 ):
-    team = db.query(Team).filter(Team.secret_key == req.secretKey).first()
-    if not team:
-        raise HTTPException(
-            status_code=404, detail="Team with the provided secret key was not found"
+    # Check if team with the same name already exists
+    existing_team = db.query(Team).filter(Team.name == req.teamName).first()
+    if existing_team:
+        return JSONResponse(
+            status_code=409,  # Conflict
+            content={"status": "error", "message": "Team name already exists!"},
         )
 
-    team.name = req.teamName
+    new_team = Team(name=req.teamName)
+    db.add(new_team)
     db.commit()
-    db.refresh(team)
+    db.refresh(new_team)
+
     return {
-        "message": "Team name updated successfully",
+        "message": "Team created successfully",
+        "team_name": new_team.name,
+        "team_id": new_team.id,
+        "status": "success",
+    }
+
+
+@app.post("/join")
+def join_team(
+    req: RegisterRequest,
+    db: Session = Depends(get_db),
+    api_key: str = Security(get_api_key),
+):
+    # check if the team exists
+    existing_team = db.query(Team).filter(Team.name == req.teamName).first()
+    if not existing_team:
+        return JSONResponse(
+            status_code=409,  # Conflict
+            content={"status": "error", "message": "Team does not exist!"},
+        )
+
+    return {
+        "message": "You have joined the team successfully",
+        "team_name": existing_team.name,
+        "team_id": existing_team.id,
         "status": "success",
     }
