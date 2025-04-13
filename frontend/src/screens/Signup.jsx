@@ -71,13 +71,13 @@ const Signup = () => {
 
                     <div className="flex w-full justify-center mb-2">
                         <button
-                            className="mx-1 font-bold text-lg w-1/2 text-center border-1 border-purple-800  py-1 flex justify-evenly items-center rounded-lg cursor-pointer hover:bg-purple-950"
+                            className="mr-1 font-bold text-lg w-1/2 text-center border-1 border-purple-800  py-1 flex justify-evenly items-center rounded-lg cursor-pointer hover:bg-purple-950"
                             onClick={createTeam}
                         >
                             Create Team
                         </button>
                         <button
-                            className="mx-1 font-bold text-lg w-1/2 text-center py-1 flex bg-purple-800 justify-evenly items-center rounded-lg cursor-pointer hover:bg-purple-950"
+                            className="ml-1 font-bold text-lg w-1/2 text-center py-1 flex bg-purple-800 justify-evenly items-center rounded-lg cursor-pointer hover:bg-purple-950"
                             onClick={joinTeam}
                         >
                             Join Team

@@ -3,13 +3,14 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, constr
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 import time
 import tempfile
 import subprocess
 import os
 from models import Team, Base, CodeSubmission
 from database import SessionLocal, engine
+from sqlalchemy import func
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 
@@ -27,6 +28,11 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 api_keys = [API_KEY]
 api_key_header = APIKeyHeader(name="X-API-Key")
+
+# Set up Jinja2 environment and load the template from file
+template_loader = FileSystemLoader(searchpath="./templates")
+template_env = Environment(loader=template_loader)
+template = template_env.get_template("template.py.j2")  # template file name
 
 
 def get_api_key(api_key_header: str = Security(api_key_header)) -> str:
@@ -122,17 +128,7 @@ def submit_code(
             content={"status": "error", "message": "Team does not exist!"},
         )
 
-    # 2. Prepare Jinja2 template
-    python_template = Template(
-        """
-{{ code|indent(4) }}
-
-if __name__ == "__main__":
-    path_planning()
-"""
-    )
-
-    rendered_code = python_template.render(code=req.code)
+    rendered_code = template.render(code=req.code)
 
     # 3. Save to temporary file
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".py", delete=False) as temp:
@@ -166,7 +162,9 @@ if __name__ == "__main__":
 
     # 5. Save to DB
     duration = round(end_time - start_time, 3)
-    submission = CodeSubmission(team_id=req.teamID, code=req.code, time_to_run=duration)
+    # submission = CodeSubmission(team_id=req.teamID, code=req.code, time_to_run=duration)
+    submission = CodeSubmission(team_id=req.teamID, time_to_run=duration)
+
     db.add(submission)
     db.commit()
     db.refresh(submission)
@@ -176,4 +174,71 @@ if __name__ == "__main__":
         "message": "Code submitted and executed successfully",
         "time_to_run": duration,
         "submission_id": submission.id,
+    }
+
+
+@app.get("/leaderboard")
+def get_leaderboard(
+    db: Session = Depends(get_db),
+    api_key: str = Security(get_api_key),
+):
+    # Query for the fastest time for each team
+    fastest_times = (
+        db.query(
+            Team.name.label("team_name"),
+            func.min(CodeSubmission.time_to_run).label("fastest_time"),
+        )
+        .join(CodeSubmission, CodeSubmission.team_id == Team.id)
+        .group_by(Team.id)  # Grouping by team_id to get the fastest time for each team
+        .order_by("fastest_time")  # Ordering by fastest time (ascending)
+        .all()
+    )
+
+    if not fastest_times:
+        raise HTTPException(status_code=404, detail="No submissions found")
+
+    # Return the result
+    return {
+        "status": "success",
+        "leaderboard": [
+            {"team_name": team_name, "fastest_time": fastest_time}
+            for team_name, fastest_time in fastest_times
+        ],
+    }
+
+
+@app.get("/leaderboard/{team_id}")
+def get_team_fastest_time(
+    team_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Security(get_api_key),
+):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    fastest_submission = (
+        db.query(CodeSubmission)
+        .filter(CodeSubmission.team_id == team_id)
+        .order_by(CodeSubmission.time_to_run.asc())
+        .first()
+    )
+
+    if not fastest_submission:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "team_id": team_id,
+                "team_name": team.name,
+                "fastest_time": None,
+                "message": "No submissions yet for this team.",
+            },
+        )
+
+    return {
+        "status": "success",
+        "team_id": team_id,
+        "team_name": team.name,
+        "fastest_time": fastest_submission.time_to_run,
     }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navigation from "../components/Navigation";
 import CodeEditor from "../components/CodeEditor";
 import placeholder from "../assets/placeholderimage";
@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { RiResetLeftFill } from "react-icons/ri";
 import { submitCode } from "../api/submitCode";
 import Loading from "../components/Loading";
+import { getMyTeamsFastestTime } from "../api/leaderboard";
 
 const Submit = () => {
     const initialCode = "def path_planning():\n    pass\n";
@@ -28,6 +29,7 @@ const Submit = () => {
 
     const handleSubmit = async () => {
         setLoading(true);
+        setCodeError("");
         const teamID = localStorage.getItem("teamID");
         if (!teamID) {
             toast.error("Team ID not found!");
@@ -42,12 +44,32 @@ const Submit = () => {
             setCodeError(response?.message);
         }
         setLoading(false);
+        updateMyFastestTime();
     };
+
+    const updateMyFastestTime = () => {
+        const teamID = localStorage.getItem("teamID");
+        if (!teamID) {
+            toast.error("Team ID not found!");
+            return;
+        }
+        getMyTeamsFastestTime(teamID).then((response) => {
+            if (response?.status === "success") {
+                setBestTime(response.fastest_time);
+            } else {
+                setCodeError(response?.message);
+            }
+        });
+    };
+
+    useEffect(() => {
+        updateMyFastestTime();
+    }, []);
     return (
         <>
             <Navigation
                 screens={[
-                    { url: "/", title: "Submit" },
+                    { url: "/", title: "Submit Code" },
                     { url: "/leaderboard", title: "Leaderboard" }
                 ]}
             />
@@ -89,7 +111,7 @@ const Submit = () => {
                         </div>
 
                         <button
-                            className="mt-4 p-2 bg-purple-800 text-white rounded-lg font-bold cursor-pointer hover:bg-purple-900 flex justify-center items-center"
+                            className="mt-4 p-2 bg-radial from-purple-600 to-purple-700 text-white rounded-lg font-bold cursor-pointer hover:bg-purple-900 flex justify-center items-center"
                             onClick={handleSubmit}
                             disabled={loading}
                         >
@@ -113,20 +135,30 @@ const Submit = () => {
                             alt="Result"
                         ></img>
                         <div className="w-11/12 flex justify-center items-start flex-col mt-4">
-                            <p className="text-xl">
-                                Time taken:{" "}
-                                <span className="text-purple-400 font-bold">
-                                    {timeTaken}
-                                </span>{" "}
-                                seconds
-                            </p>
-                            <p className="text-xl mt-4">
-                                Your best time:{" "}
-                                <span className="text-purple-400 font-bold">
-                                    {bestTime}
-                                </span>{" "}
-                                seconds
-                            </p>
+                            {timeTaken === 0 && (
+                                <p className="text-xl">
+                                    Submit your code to see the results!
+                                </p>
+                            )}
+                            {timeTaken > 0 && (
+                                <p className="text-xl">
+                                    Time taken:{" "}
+                                    <span className="text-purple-400 font-bold">
+                                        {timeTaken}
+                                    </span>{" "}
+                                    seconds
+                                </p>
+                            )}
+                            {bestTime > 0 && (
+                                <p className="text-xl mt-4">
+                                    Your best time:{" "}
+                                    <span className="text-purple-400 font-bold">
+                                        {bestTime}
+                                    </span>{" "}
+                                    seconds
+                                </p>
+                            )}
+
                             {codeError && (
                                 <p className="text-red-500 font-bold mt-4">
                                     Error: {codeError}

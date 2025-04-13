@@ -23,14 +23,14 @@ const NavBar = ({ screens }) => {
     };
 
     return (
-        <div className="w-full h-[56px] top-0 flex justify-center bg-gray-800 ">
+        <div className="w-full h-[56px] top-0 flex justify-center bg-[#111828] ">
             <div className="w-full flex justify-start items-center px-4">
                 <h1 className="text-lg font-bold">
                     Welcome <span className="text-purple-400">{teamName}</span>
                 </h1>
             </div>
 
-            <div className="w-1/4 h-full flex items-center justify-evenly gap-4">
+            <div className="w-1/2 h-full flex items-center justify-evenly gap-4">
                 {screens.map((screen) => {
                     const isActive = activeUrl === screen.url;
                     return (
@@ -50,7 +50,7 @@ const NavBar = ({ screens }) => {
             </div>
             <div className="w-full flex justify-end items-center px-4">
                 <button
-                    className="mr-2 text-lg font-bold text-center bg-purple-800 px-2 py-1 flex justify-evenly items-center rounded-xl cursor-pointer hover:bg-gray-600"
+                    className="mr-2 text-lg font-bold text-center bg-radial from-purple-600 to-purple-700 px-2 py-1 flex justify-evenly items-center rounded-xl cursor-pointer hover:bg-gray-600"
                     onClick={handleLogout}
                 >
                     Logout <FiLogOut className="ml-2" />
