@@ -48,14 +48,16 @@ const Signup = () => {
     return (
         <div className="flex justify-evenly items-center h-screen w-screen">
             <div className="flex w-full flex-col h-full justify-center items-center">
-                <h1 className="text-4xl font-bold">Welcome to</h1>
-                <h1 className="text-4xl font-bold mb-12">VROOM's Workshop!</h1>
-                <img src={splash} className="w-3/4"></img>
+                <h1 className="text-4xl font-bold ml-30">Welcome to</h1>
+                <h1 className="text-4xl font-bold mb-12 ml-30">
+                    VROOM's Workshop!
+                </h1>
+                <img src={splash} className="w-3/4 ml-30"></img>
             </div>
             <div className="flex w-full flex-col h-full justify-center items-center">
-                <h1 className="text-3xl font-bold mb-8">Register</h1>
+                <h1 className="text-3xl font-bold mb-8 mr-30">Register</h1>
 
-                <div className="flex flex-col justify-center items-center">
+                <div className="flex flex-col justify-center items-center mr-30">
                     <div className="text-lg text-start w-full mb-2">
                         Your team's name:
                     </div>
@@ -64,7 +66,7 @@ const Signup = () => {
                         name="team"
                         placeholder="Super Cool Team Name"
                         required
-                        className="w-96 h-14 px-4 text-lg mb-4 border border-purple-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-96 h-14 px-4 text-lg mb-4 border border-purple-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-transparent"
                     />
 
                     <div className="flex w-full justify-center mb-2">

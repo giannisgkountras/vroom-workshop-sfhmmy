@@ -13,44 +13,46 @@ const ProtectedRoute = ({ children }) => {
 
 const App = () => {
     return (
-        <TeamProvider>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/signup" element={<Signup />} />
-                    <Route
-                        path="/"
-                        element={
-                            <ProtectedRoute>
-                                <Submit />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/leaderboard"
-                        element={
-                            <ProtectedRoute>
-                                <Leaderboard />
-                            </ProtectedRoute>
-                        }
-                    />
-                </Routes>
-                <PoweredByVroom />
-            </BrowserRouter>
-            <ToastContainer
-                position="bottom-right"
-                autoClose={5000}
-                hideProgressBar={true}
-                newestOnTop={false}
-                closeOnClick={false}
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                transition={Bounce}
-                stacked={true}
-            />
-        </TeamProvider>
+        <div className="app">
+            <TeamProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/signup" element={<Signup />} />
+                        <Route
+                            path="/"
+                            element={
+                                <ProtectedRoute>
+                                    <Submit />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/leaderboard"
+                            element={
+                                <ProtectedRoute>
+                                    <Leaderboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                    </Routes>
+                    <PoweredByVroom />
+                </BrowserRouter>
+                <ToastContainer
+                    position="bottom-right"
+                    autoClose={5000}
+                    hideProgressBar={true}
+                    newestOnTop={false}
+                    closeOnClick={false}
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="dark"
+                    transition={Bounce}
+                    stacked={true}
+                />
+            </TeamProvider>
+        </div>
     );
 };
 

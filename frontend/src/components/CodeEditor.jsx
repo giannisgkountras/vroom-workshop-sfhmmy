@@ -45,9 +45,6 @@ const CodeEditor = ({ code, setCode }) => {
     };
     return (
         <div className="mb-4 w-11/12 flex flex-col">
-            <h2 className="mb-2 text-lg font-semibold text-gray-200">
-                Write your python code here:
-            </h2>
             <Editor
                 ref={editorRef}
                 value={code}
