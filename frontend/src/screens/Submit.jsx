@@ -75,7 +75,7 @@ const Submit = () => {
             />
             <div className="flex flex-col items-center justify-start h-full w-full ">
                 <div className="flex w-full h-full justify-evenly items-start">
-                    <div className="w-2/3 h-full flex flex-col justify-center items-center">
+                    <div className="w-2/3 h-full flex flex-col justify-start items-center border-r-3 border-[#111929]">
                         <h1 className="text-3xl font-bold text-white mb-4 mt-4 text-start w-11/12">
                             Implement your solution
                         </h1>
@@ -125,7 +125,7 @@ const Submit = () => {
                             )}
                         </button>
                     </div>
-                    <div className="w-1/3 h-full flex flex-col justify-center items-center">
+                    <div className="w-1/3 h-full flex flex-col justify-start items-center">
                         <h1 className="text-3xl font-bold text-white mb-4 mt-4 text-start w-11/12">
                             Your Results
                         </h1>
