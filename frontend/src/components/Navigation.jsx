@@ -30,7 +30,7 @@ const NavBar = ({ screens }) => {
                 </h1>
             </div>
 
-            <div className="w-1/2 h-full flex items-center justify-evenly gap-4">
+            <div className="w-full h-full flex items-center justify-evenly gap-4">
                 {screens.map((screen) => {
                     const isActive = activeUrl === screen.url;
                     return (
