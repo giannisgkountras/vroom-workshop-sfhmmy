@@ -18,7 +18,7 @@
 }
 .app {
     min-height: 100vh;
-    height: 100vh;
+    height: calc(100vh -56px);
 }
 /* For Webkit Browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
