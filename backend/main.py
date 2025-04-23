@@ -149,7 +149,7 @@ def submit_code(
             check=True,
             capture_output=True,
             text=True,
-            timeout=20,
+            # timeout=60,
         )
         end_time = time.time()
 

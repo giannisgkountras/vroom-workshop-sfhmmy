@@ -6,10 +6,11 @@ import { toast } from "react-toastify";
 import { RiResetLeftFill } from "react-icons/ri";
 import { submitCode } from "../api/submitCode";
 import Loading from "../components/Loading";
+import initialPythonCode from "../assets/initialCode";
 import { getMyTeamsFastestTime } from "../api/leaderboard";
 
 const Submit = () => {
-    const initialCode = "def calculate_path():\n    pass\n";
+    const initialCode = initialPythonCode;
     const [code, setCode] = useState(
         localStorage.getItem("code") || initialCode
     );
@@ -119,7 +120,13 @@ const Submit = () => {
                         </div>
 
                         <button
-                            className="mt-4 p-2 bg-radial from-purple-600 to-purple-700 text-white rounded-lg font-bold cursor-pointer hover:bg-purple-900 flex justify-center items-center"
+                            className={`mt-4 p-2 text-white rounded-lg font-bold flex justify-center items-center 
+                                ${
+                                    loading
+                                        ? "bg-[#111828] cursor-not-allowed"
+                                        : "bg-radial from-purple-600 to-purple-700 hover:bg-purple-900 cursor-pointer"
+                                }
+                              `}
                             onClick={handleSubmit}
                             disabled={loading}
                         >

@@ -1,4 +1,171 @@
-{{ code }}
+import os
+import base64
+import cv2
+import networkx as nx
+from tqdm import tqdm
+
+class PathPlanning:
+    """
+    Class responsible for the Global Path Planning processes on the vehicle.
+
+    Attributes:
+        source (str):
+            Source point of the path
+        target (str):
+            Target point of the path
+        postfix (str):
+            A postfix to be added in the paths of images when saved
+        map_path (str):
+            The path to the graphml file
+        max_x (float):
+            Maximum X value that the vehicle can reach
+        max_y (float):
+            Maximum Y value that the vehicle can reach
+        x_shift (float):
+            X-Shift of the upper left corner of the track with regards to the (0, 0) point
+        y_shift (float):
+            Y-Shift of the upper left corner of the track with regards to the (0, 0) point
+        G (networkx graph):
+            The loaded graph object
+    """
+
+    def __init__(self, source, target):
+
+        assert source != target
+        competition_map_path = "/app/maps/competition_track.graphml"        
+        max_x_comp = 20.7
+        max_y_comp = 13.8
+        x_shift_comp = 0.0
+        y_shift_comp = 0.0
+
+        self.coor_prev = []
+        self.min_node = {}
+        self.source = source
+        self.target = target
+
+        must_nodes_competition = {
+            "parking": {
+                "pass": False,
+                "nodes": [240],
+            },
+            "roundabout": {
+                "pass": False,
+                "nodes": [317, 318, 368, 342],
+            },
+            "intersection": {
+                "pass": True,
+                "nodes": [32, 28, 30, 26],
+            },
+            "highway": {
+                "pass": True,
+                "nodes": [404, 425],
+            },
+            "speedrun": {
+                "pass": True,
+                "nodes": [151, 165],
+            },
+            "missing_lines": {
+                "pass": True,
+                "nodes": [379, 357],
+            },
+            "bus_lane": {
+                "pass": True,
+                "nodes": [271],
+            },
+        }
+
+        self.must_nodes = must_nodes_competition
+        self.map_path = competition_map_path
+        self.max_x = max_x_comp
+        self.max_y = max_y_comp
+        self.x_shift = x_shift_comp
+        self.y_shift = y_shift_comp
+        self.w_map = 9766
+        self.h_map = 6502
+        self.path_color = (255, 255, 0)
+        self.G = nx.read_graphml(self.map_path)
+
+    def find_best_path(self):
+        """
+        This function finds the best path from the source to the target node,
+        visualizes the path on the map image and saves the image.
+
+        Returns:
+            path (list):
+                The Best path
+        """
+        base, _ = os.path.splitext(self.map_path)
+        img_path = base + ".png"
+        path = self.calculate_path()
+
+        if path is None:
+            raise Exception("Cannot find path!")
+
+        self.visualize_path(
+            path=path,
+            img_path=img_path,
+            out_name=f"/tmp/{os.path.basename(__file__)}.txt",
+            color=self.path_color,
+        )
+        print("INFO - Best path found and visualized!")
+
+        return path
+
+    {{ code | indent(4) }}
+
+    def visualize_path(self, path, img_path, arrows=True, out_name="Points.jpg", color=(255, 0, 0)):
+        """
+        Visualize the path on the map image
+
+        Parameters:
+            path (list):
+                The current path
+            img_path (str):
+                The path of the image
+            arrows (bool):
+                Connect nodes with arrows
+            out_name (str):
+                Output name of the file
+            color (tuple):
+                Color of the annotated nodes
+        """
+
+        img = cv2.imread(img_path)
+        h, w, _ = img.shape
+
+        factor_x = w / self.max_x
+        factor_y = h / self.max_y
+
+        points = {}
+        for node in tqdm(self.G.nodes(data=True)):
+            if not node[0] in path:
+                continue
+            px = int((node[1]["x"] - self.x_shift) * factor_x)
+            py = int((node[1]["y"] - self.y_shift) * factor_y)
+
+            points[node[0]] = (px, py)
+            cv2.circle(img, (px, py), color=color, radius=6, thickness=-1)
+
+        if arrows:
+            for i in range(len(path) - 1):
+                node_cur = path[i]
+                node_next = path[i + 1]
+                p_start = points[node_cur]
+                p_end = points[node_next]
+                cv2.arrowedLine(img, p_start, p_end, color=color, thickness=6)
+        
+        success, buffer = cv2.imencode('.png', img)
+        if success:
+            img_base64 = base64.b64encode(buffer).decode('utf-8')
+
+            with open(out_name, "w") as f:
+                f.write(img_base64)
+
+            print("INFO - Image successfully encoded and saved as text.")
+        else:
+            print("ERROR - Image encoding failed.")
 
 if __name__ == "__main__":
-    path_planning()
+
+    pp = PathPlanning(source="218", target="199")
+    pp.find_best_path()

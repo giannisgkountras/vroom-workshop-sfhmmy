@@ -3,3 +3,6 @@ uvicorn
 SQLAlchemy
 dotenv
 Jinja2
+networkx
+opencv-python
+tqdm
