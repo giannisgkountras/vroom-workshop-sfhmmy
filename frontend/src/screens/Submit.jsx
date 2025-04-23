@@ -84,7 +84,7 @@ const Submit = () => {
             />
             <div className="flex flex-col items-center justify-start h-full w-full ">
                 <div className="flex w-full h-full justify-evenly items-start">
-                    <div className="w-2/3 h-full flex flex-col justify-start items-center border-r-3 border-[#111929]">
+                    <div className="w-3/5 h-full flex flex-col justify-start items-center border-r-3 border-[#111929]">
                         <h1 className="text-3xl font-bold text-white mb-4 mt-4 text-start w-11/12">
                             Implement your solution
                         </h1>
@@ -140,7 +140,7 @@ const Submit = () => {
                             )}
                         </button>
                     </div>
-                    <div className="w-1/3 h-full flex flex-col justify-start items-center">
+                    <div className="w-2/5 h-full flex flex-col justify-start items-center">
                         <h1 className="text-3xl font-bold text-white mb-4 mt-4 text-start w-11/12">
                             Your Results
                         </h1>
@@ -155,31 +155,36 @@ const Submit = () => {
                                     Submit your code to see the results!
                                 </p>
                             )}
-                            {timeTaken > 0 && (
-                                <p className="text-xl">
-                                    Time taken:{" "}
-                                    <span className="text-purple-400 font-bold">
-                                        {timeTaken}
-                                    </span>{" "}
-                                    seconds
-                                </p>
-                            )}
-                            <p className="text-xl mt-2">Output: </p>
+                            <div className="flex w-full mt-4 justify-start items-center">
+                                {timeTaken > 0 && (
+                                    <p className="text-xl w-full">
+                                        Time taken:{" "}
+                                        <span className="text-purple-400 font-bold">
+                                            {timeTaken}
+                                        </span>{" "}
+                                        seconds
+                                    </p>
+                                )}
+                                {bestTime > 0 && (
+                                    <p className="text-xl w-full ">
+                                        Best time:{" "}
+                                        <span className="text-purple-400 font-bold">
+                                            {bestTime}
+                                        </span>{" "}
+                                        seconds
+                                    </p>
+                                )}
+                            </div>
+
                             {output && (
-                                <div className="w-full h-fit max-h-80 overflow-auto flex justify-center items-start bg-[#111829] rounded-lg mt-4">
+                                <p className="text-xl w-full mt-4">Output: </p>
+                            )}
+                            {output && (
+                                <div className="w-full h-fit max-h-64 overflow-auto flex justify-center items-start bg-[#111829] rounded-lg mt-4 mb-4">
                                     <pre className="text-gray-200 font-mono w-full h-full p-4">
                                         <code>{output}</code>
                                     </pre>
                                 </div>
-                            )}
-                            {bestTime > 0 && (
-                                <p className="text-xl mt-4 mb-4">
-                                    Your best time:{" "}
-                                    <span className="text-purple-400 font-bold">
-                                        {bestTime}
-                                    </span>{" "}
-                                    seconds
-                                </p>
                             )}
 
                             {codeError && (
