@@ -3,7 +3,7 @@ import vroomLogo from "../assets/vroom_logo.png";
 
 const PoweredByVroom = () => {
     return (
-        <div className="absolute bottom-0 w-full flex justify-center items-center">
+        <div className="fixed bottom-0 w-full flex justify-center items-center">
             <div className="flex justify-center items-center w-ful p-2">
                 <img src={vroomLogo} alt="VROOM Logo" className="h-5 mr-1" />
                 <h1 className="text-white">

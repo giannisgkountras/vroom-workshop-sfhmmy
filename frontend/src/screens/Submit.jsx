@@ -9,7 +9,7 @@ import Loading from "../components/Loading";
 import { getMyTeamsFastestTime } from "../api/leaderboard";
 
 const Submit = () => {
-    const initialCode = "def path_planning():\n    pass\n";
+    const initialCode = "def calculate_path():\n    pass\n";
     const [code, setCode] = useState(
         localStorage.getItem("code") || initialCode
     );
@@ -20,6 +20,7 @@ const Submit = () => {
     const [timeTaken, setTimeTaken] = useState(0);
     const [bestTime, setBestTime] = useState(0);
     const [codeError, setCodeError] = useState("");
+    const [output, setOutput] = useState("");
     const resetCode = () => {
         toast.success("Code reset successfully!");
         setShowSure(false);
@@ -30,6 +31,7 @@ const Submit = () => {
     const handleSubmit = async () => {
         setLoading(true);
         setCodeError("");
+        setOutput("");
         const teamID = localStorage.getItem("teamID");
         if (!teamID) {
             toast.error("Team ID not found!");
@@ -37,8 +39,14 @@ const Submit = () => {
         }
         const response = await submitCode(teamID, code);
         if (response?.status === "success") {
-            // setImageResult(response.image);
+            if (response?.image === "") {
+                toast.error("No image generated!");
+                setImageResult(placeholder);
+            } else {
+                setImageResult(response.image);
+            }
             setTimeTaken(response.time_to_run);
+            setOutput(response.output);
             // setBestTime(response.best_time);
         } else {
             setCodeError(response?.message);
@@ -83,7 +91,7 @@ const Submit = () => {
                             <h2 className="mb-2 text-gray-200">
                                 Make sure you name your function{" "}
                                 <span className="font-mono text-purple-400">
-                                    path_planning
+                                    calculate_path
                                 </span>
                             </h2>
                             {showSure && (
@@ -130,7 +138,7 @@ const Submit = () => {
                             Your Results
                         </h1>
                         <img
-                            src={imageResult}
+                            src={`data:image/png;base64,${imageResult}`}
                             className="w-11/12 rounded-2xl border-2 border-gray-700"
                             alt="Result"
                         ></img>
@@ -149,8 +157,16 @@ const Submit = () => {
                                     seconds
                                 </p>
                             )}
+                            <p className="text-xl mt-2">Output: </p>
+                            {output && (
+                                <div className="w-full h-fit max-h-80 overflow-auto flex justify-center items-start bg-[#111829] rounded-lg mt-4">
+                                    <pre className="text-gray-200 font-mono w-full h-full p-4">
+                                        <code>{output}</code>
+                                    </pre>
+                                </div>
+                            )}
                             {bestTime > 0 && (
-                                <p className="text-xl mt-4">
+                                <p className="text-xl mt-4 mb-4">
                                     Your best time:{" "}
                                     <span className="text-purple-400 font-bold">
                                         {bestTime}

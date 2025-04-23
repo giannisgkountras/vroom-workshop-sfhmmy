@@ -129,29 +129,36 @@ def submit_code(
         )
 
     rendered_code = template.render(code=req.code)
+    temp_name = ""
 
     # 3. Save to temporary file
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".py", delete=False) as temp:
         temp.write(rendered_code)
         temp.flush()
         temp_path = temp.name
+        temp_name = temp.name
 
     # 4. Time and run the script
     try:
         start_time = time.time()
-        subprocess.run(
-            ["python", temp_path],
+        result = subprocess.run(
+            [
+                "python",
+                temp_path,
+            ],
             check=True,
             capture_output=True,
-            timeout=10,  # seconds, prevent infinite loops
+            text=True,
+            timeout=20,
         )
         end_time = time.time()
+
     except subprocess.CalledProcessError as e:
         return JSONResponse(
             status_code=400,
             content={
                 "status": "error",
-                "message": f"Code execution failed: {e.stderr.decode()}",
+                "message": f"Code execution failed: {e.stderr}",
             },
         )
     except subprocess.TimeoutExpired:
@@ -169,11 +176,19 @@ def submit_code(
     db.commit()
     db.refresh(submission)
 
+    # 6. Load the generated base64 image
+    image_path = os.path.join("/tmp", f"{temp_name}.txt")
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+
     return {
         "status": "success",
         "message": "Code submitted and executed successfully",
         "time_to_run": duration,
         "submission_id": submission.id,
+        "output": result.stdout,
+        "image": image_data if os.path.exists(image_path) else "",
     }
 
 
