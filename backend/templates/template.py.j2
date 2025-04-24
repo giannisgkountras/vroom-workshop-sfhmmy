@@ -46,31 +46,31 @@ class PathPlanning:
         must_nodes_competition = {
             "parking": {
                 "pass": False,
-                "nodes": [240],
+                "nodes": ['240'],
             },
             "roundabout": {
                 "pass": False,
-                "nodes": [317, 318, 368, 342],
+                "nodes": ['317', '318', '368', '342'],
             },
             "intersection": {
-                "pass": True,
-                "nodes": [32, 28, 30, 26],
+                "pass": False,
+                "nodes": ['32', '28', '30', '26'],
             },
             "highway": {
                 "pass": True,
-                "nodes": [404, 425],
+                "nodes": ['404', '425'],
             },
             "speedrun": {
-                "pass": True,
-                "nodes": [151, 165],
+                "pass": False,
+                "nodes": ['151', '165'],
             },
             "missing_lines": {
-                "pass": True,
-                "nodes": [379, 357],
+                "pass": False,
+                "nodes": ['379', '357'],
             },
             "bus_lane": {
                 "pass": True,
-                "nodes": [271],
+                "nodes": ['271'],
             },
         }
 
@@ -100,6 +100,17 @@ class PathPlanning:
 
         if path is None:
             raise Exception("Cannot find path!")
+        
+        # Check that the path contains all must-nodes
+        for element in self.must_nodes.values():
+            if element["pass"]:
+                continue
+            if not any(node in path for node in element["nodes"]):
+                raise Exception(f"Path does not contain must-node: {element['nodes']}")
+            
+        # Check that the path is a list that contains only strings
+        if not isinstance(path, list) or not all(isinstance(node, str) for node in path):
+            raise Exception("Path is not a valid list of strings!")
 
         self.visualize_path(
             path=path,
@@ -141,19 +152,44 @@ class PathPlanning:
             if not node[0] in path:
                 continue
             px = int((node[1]["x"] - self.x_shift) * factor_x)
-            py = int((node[1]["y"] - self.y_shift) * factor_y)
+            py = h - int((node[1]["y"] - self.y_shift) * factor_y)
 
             points[node[0]] = (px, py)
-            cv2.circle(img, (px, py), color=color, radius=6, thickness=-1)
+            cv2.circle(img, (px, py), color=color, radius=18, thickness=-1)
 
         if arrows:
             for i in range(len(path) - 1):
+                    
                 node_cur = path[i]
+                    
                 node_next = path[i + 1]
                 p_start = points[node_cur]
                 p_end = points[node_next]
-                cv2.arrowedLine(img, p_start, p_end, color=color, thickness=6)
+                if i == 0:
+                    cv2.circle(img, p_start, color=(0, 255, 255), radius=30, thickness=-1)
+                    cv2.putText(
+                        img,
+                        "START",
+                        (p_start[0] + 20, p_start[1] - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        3,
+                        color=(0, 255, 255),
+                        thickness=8,
+                    )
+                elif i == len(path) - 2:
+                    cv2.circle(img, p_end, color=(0, 255, 255), radius=30, thickness=-1)
+                    cv2.putText(
+                        img,
+                        "END",
+                        (p_end[0] + 20, p_end[1] - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        3,
+                        color=(0, 255, 255),
+                        thickness=8,
+                    )
+                cv2.arrowedLine(img, p_start, p_end, color=color, thickness=18)
         
+        # cv2.imwrite("app/output.png", img)
         success, buffer = cv2.imencode('.png', img)
         if success:
             img_base64 = base64.b64encode(buffer).decode('utf-8')
@@ -167,5 +203,5 @@ class PathPlanning:
 
 if __name__ == "__main__":
 
-    pp = PathPlanning(source="218", target="199")
+    pp = PathPlanning(source="147", target="443")
     pp.find_best_path()

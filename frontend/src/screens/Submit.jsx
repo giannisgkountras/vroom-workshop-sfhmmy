@@ -42,7 +42,7 @@ const Submit = () => {
         if (response?.status === "success") {
             if (response?.image === "") {
                 toast.error("No image generated!");
-                setImageResult(placeholder);
+                // setImageResult(placeholder);
             } else {
                 setImageResult(response.image);
             }
