@@ -7,8 +7,10 @@ from jinja2 import Environment, FileSystemLoader
 import time
 import tempfile
 import subprocess
+import asyncio
 import os
 from models import Team, Base, CodeSubmission
+import traceback
 from database import SessionLocal, engine
 from sqlalchemy import func
 from fastapi.middleware.cors import CORSMiddleware
@@ -114,82 +116,78 @@ def join_team(
     }
 
 
+async def run_code_async(code_path):
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        code_path,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        # non-zero exit → raise so we can catch it centrally
+        raise RuntimeError(stderr.decode())
+    return stdout.decode(), stderr.decode()
+
+
 @app.post("/submit")
-def submit_code(
+async def submit_code(
     req: SubmitCodeRequest,
     db: Session = Depends(get_db),
     api_key: str = Security(get_api_key),
 ):
-    # Check if the team exists
-    current_team = db.query(Team).filter(Team.id == req.teamID).first()
-    if not current_team:
-        return JSONResponse(
-            status_code=409,  # Conflict
-            content={"status": "error", "message": "Team does not exist!"},
-        )
-
-    rendered_code = template.render(code=req.code)
-    temp_name = ""
-
-    # 3. Save to temporary file
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".py", delete=False) as temp:
-        temp.write(rendered_code)
-        temp.flush()
-        temp_path = temp.name
-        temp_name = temp.name
-
-    # 4. Time and run the script
     try:
+        # 1. Check if the team exists
+        current_team = db.query(Team).filter(Team.id == req.teamID).first()
+        if not current_team:
+            return JSONResponse(
+                status_code=409,
+                content={"status": "error", "message": "Team does not exist!"},
+            )
+
+        # 2. Render & write code to temp file
+        rendered_code = template.render(code=req.code)
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".py", delete=False) as temp:
+            temp.write(rendered_code)
+            temp_path = temp.name
+
+        # 3. Run asynchronously
         start_time = time.time()
-        result = subprocess.run(
-            [
-                "python",
-                temp_path,
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+        result_stdout, result_stderr = await run_code_async(temp_path)
         end_time = time.time()
 
-    except subprocess.CalledProcessError as e:
+        # 4. Persist to DB
+        duration = round(end_time - start_time, 3)
+        submission = CodeSubmission(team_id=req.teamID, time_to_run=duration)
+        db.add(submission)
+        db.commit()
+        db.refresh(submission)
+
+        # 5. Read image if present
+        image_path = f"/tmp/{os.path.basename(temp_path)}.txt"
+        image_data = b""
+        if os.path.exists(image_path):
+            image_data = open(image_path, "rb").read()
+
+        return {
+            "status": "success",
+            "time_to_run": duration,
+            "submission_id": submission.id,
+            "output": result_stdout,
+            "image": image_data.decode("latin1") if image_data else "",
+        }
+
+    except HTTPException as he:
+        # rethrow FastAPI HTTPExceptions
+        raise he
+
+    except Exception as e:
+        # catch everything else, include full traceback
+        tb = traceback.format_exc()
         return JSONResponse(
-            status_code=400,
-            content={
-                "status": "error",
-                "message": f"Code execution failed: {e.stderr}",
-            },
+            status_code=500,
+            content={"status": "error", "message": str(e), "traceback": tb},
         )
-    except subprocess.TimeoutExpired:
-        return JSONResponse(
-            status_code=400,
-            content={"status": "error", "message": "Code execution timed out"},
-        )
-
-    # 5. Save to DB
-    duration = round(end_time - start_time, 3)
-    # submission = CodeSubmission(team_id=req.teamID, code=req.code, time_to_run=duration)
-    submission = CodeSubmission(team_id=req.teamID, time_to_run=duration)
-
-    db.add(submission)
-    db.commit()
-    db.refresh(submission)
-
-    # 6. Load the generated base64 image
-    image_path = os.path.join("/tmp", f"{temp_name}.txt")
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as image_file:
-            image_data = image_file.read()
-
-    return {
-        "status": "success",
-        "message": "Code submitted and executed successfully",
-        "time_to_run": duration,
-        "submission_id": submission.id,
-        "output": result.stdout,
-        "image": image_data if os.path.exists(image_path) else "",
-    }
 
 
 @app.get("/leaderboard")
