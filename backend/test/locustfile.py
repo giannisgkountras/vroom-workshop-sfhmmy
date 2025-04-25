@@ -44,7 +44,7 @@ class FastAPIUser(HttpUser):
     """
         self.client.post(
             "/submit",
-            json={"code": code_string, "teamID": "3"},
+            json={"code": code_string, "teamID": "1"},
             headers={
                 "Content-Type": "application/json",
                 "X-Api-Key": self.API_KEY,  # Send API key in header if required
