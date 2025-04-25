@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes, Navigate } from "react-router";
 import Submit from "./screens/Submit";
+import Admin from "./screens/Admin";
 import Leaderboard from "./screens/Leaderboard";
 import Signup from "./screens/Signup";
 import { TeamProvider, useTeam } from "./context/TeamContext";
@@ -18,6 +19,7 @@ const App = () => {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/admin" element={<Admin />} />
                         <Route
                             path="/"
                             element={

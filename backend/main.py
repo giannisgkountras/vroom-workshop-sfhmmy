@@ -28,7 +28,9 @@ app.add_middleware(
 
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
-api_keys = [API_KEY]
+ADMIN_KEY = os.getenv("ADMIN_KEY")
+api_keys = [API_KEY, ADMIN_KEY]
+admin_api_keys = [ADMIN_KEY]
 api_key_header = APIKeyHeader(name="X-API-Key")
 
 # Set up Jinja2 environment and load the template from file
@@ -39,6 +41,14 @@ template = template_env.get_template("template.py.j2")  # template file name
 
 def get_api_key(api_key_header: str = Security(api_key_header)) -> str:
     if api_key_header in api_keys:
+        return api_key_header
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing API Key"
+    )
+
+
+def get_admin_api_key(api_key_header: str = Security(api_key_header)) -> str:
+    if api_key_header in admin_api_keys:
         return api_key_header
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing API Key"
@@ -116,17 +126,26 @@ def join_team(
     }
 
 
-async def run_code_async(code_path):
+async def run_code_async(code_path, timeout=60):  # timeout in seconds
     process = await asyncio.create_subprocess_exec(
         "python",
         code_path,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await process.communicate()
+
+    try:
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+    except asyncio.TimeoutError:
+        process.kill()
+        await process.wait()
+        raise TimeoutError(
+            f"Execution of {code_path} timed out after {timeout} seconds"
+        )
+
     if process.returncode != 0:
-        # non-zero exit → raise so we can catch it centrally
         raise RuntimeError(stderr.decode())
+
     return stdout.decode(), stderr.decode()
 
 
@@ -255,3 +274,59 @@ def get_team_fastest_time(
         "team_name": team.name,
         "fastest_time": fastest_submission.time_to_run,
     }
+
+
+@app.get("/submissions/")
+def read_submissions(
+    db: Session = Depends(get_db), api_key: str = Security(get_admin_api_key)
+):
+    submissions = db.query(CodeSubmission).all()
+    # reverse the order of submissions
+    submissions.reverse()
+    if not submissions:
+        raise HTTPException(status_code=404, detail="No submissions found")
+    return submissions
+
+
+@app.delete("/submissions/{submission_id}")
+def delete_submission(
+    submission_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Security(get_admin_api_key),
+):
+    submission = (
+        db.query(CodeSubmission).filter(CodeSubmission.id == submission_id).first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    db.delete(submission)
+    db.commit()
+
+    return {"status": "success", "message": "Submission deleted successfully"}
+
+
+@app.get("/teams/")
+def read_teams(
+    db: Session = Depends(get_db), api_key: str = Security(get_admin_api_key)
+):
+    teams = db.query(Team).all()
+    if not teams:
+        raise HTTPException(status_code=404, detail="No teams found")
+    return teams
+
+
+@app.delete("/teams/{team_id}")
+def delete_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Security(get_admin_api_key),
+):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    db.delete(team)
+    db.commit()
+
+    return {"status": "success", "message": "Team deleted successfully"}
