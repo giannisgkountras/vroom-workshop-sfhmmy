@@ -165,6 +165,7 @@ async def submit_code(
             )
 
         # 2. Render & write code to temp file
+
         rendered_code = template.render(code=req.code)
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".py", delete=False) as temp:
             temp.write(rendered_code)
@@ -188,6 +189,10 @@ async def submit_code(
         if os.path.exists(image_path):
             image_data = open(image_path, "rb").read()
 
+        print(
+            f"Received code from team {req.teamID} with submission id {submission.id} and duration {duration} seconds"
+        )
+        print(req.code)
         return {
             "status": "success",
             "time_to_run": duration,
