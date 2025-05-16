@@ -1,6 +1,7 @@
 import { useTeam } from "../context/TeamContext";
 import { useNavigate } from "react-router";
-import splash from "../assets/splash.png";
+// import splash from "../assets/splash.png";
+import splashCar from "../assets/splash_car.png";
 import { registerCall, joinCall } from "../api/register";
 import { useRef } from "react";
 import { toast } from "react-toastify";
@@ -48,13 +49,13 @@ const Signup = () => {
     return (
         <div className="flex justify-evenly items-center h-screen w-screen max-md:flex-col max-md:justify-center max-md:items-center">
             <div className="flex w-full flex-col h-full justify-center items-center">
+                <img src={splashCar} className="h-2/5 ml-30 max-md:m-0"></img>
                 <h1 className="text-4xl font-bold ml-30 max-md:m-0">
                     Welcome to
                 </h1>
                 <h1 className="text-4xl font-bold mb-12 ml-30 max-md:m-0">
                     VROOM's Workshop!
                 </h1>
-                <img src={splash} className="w-3/4 ml-30 max-md:m-0"></img>
             </div>
             <div className="flex w-full flex-col h-full justify-center items-center">
                 <h1 className="text-3xl font-bold mb-8 mr-30 max-md:m-0">

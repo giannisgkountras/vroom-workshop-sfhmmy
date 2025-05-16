@@ -45,7 +45,7 @@ const Leaderboard = () => {
                                     Team Name
                                 </th>
                                 <th className="px-6 py-3 text-left font-semibold uppercase tracking-wider">
-                                    Time Taken
+                                    Score
                                 </th>
                             </tr>
                         </thead>
@@ -73,7 +73,7 @@ const Leaderboard = () => {
                                             {team.team_name}
                                         </td>
                                         <td className="px-6 py-4 text-green-400 font-semibold">
-                                            {team.fastest_time} s
+                                            {team.best_score}
                                         </td>
                                     </tr>
                                 );

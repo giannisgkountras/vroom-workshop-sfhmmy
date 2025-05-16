@@ -18,8 +18,8 @@ const Submit = () => {
     const [showSure, setShowSure] = useState(false);
     const [loading, setLoading] = useState(false);
     const [imageResult, setImageResult] = useState(placeholder);
-    const [timeTaken, setTimeTaken] = useState(0);
-    const [bestTime, setBestTime] = useState(0);
+    const [score, setScore] = useState(0);
+    const [bestScore, setBestScore] = useState(0);
     const [codeError, setCodeError] = useState("");
     const [output, setOutput] = useState("");
     const resetCode = () => {
@@ -46,7 +46,7 @@ const Submit = () => {
             } else {
                 setImageResult(response.image);
             }
-            setTimeTaken(response.time_to_run);
+            setScore(response.score);
             setOutput(response.output);
             // setBestTime(response.best_time);
         } else {
@@ -64,7 +64,7 @@ const Submit = () => {
         }
         getMyTeamsFastestTime(teamID).then((response) => {
             if (response?.status === "success") {
-                setBestTime(response.fastest_time);
+                setBestScore(response.best_score);
             } else {
                 setCodeError(response?.message);
             }
@@ -150,28 +150,26 @@ const Submit = () => {
                             alt="Result"
                         ></img>
                         <div className="w-11/12 flex justify-center items-start flex-col mt-4">
-                            {timeTaken === 0 && (
+                            {score === 0 && (
                                 <p className="text-xl">
                                     Submit your code to see the results!
                                 </p>
                             )}
                             <div className="flex w-full mt-4 justify-start items-center">
-                                {timeTaken > 0 && (
+                                {score > 0 && (
                                     <p className="text-xl w-full">
-                                        Time taken:{" "}
+                                        Your score:{" "}
                                         <span className="text-purple-400 font-bold">
-                                            {timeTaken}
-                                        </span>{" "}
-                                        seconds
+                                            {score}
+                                        </span>
                                     </p>
                                 )}
-                                {bestTime > 0 && (
+                                {bestScore > 0 && (
                                     <p className="text-xl w-full ">
-                                        Best time:{" "}
+                                        Best score:{" "}
                                         <span className="text-purple-400 font-bold">
-                                            {bestTime}
-                                        </span>{" "}
-                                        seconds
+                                            {bestScore}
+                                        </span>
                                     </p>
                                 )}
                             </div>

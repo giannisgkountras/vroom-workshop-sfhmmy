@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import ky from "ky";
 import { FaRegTrashAlt } from "react-icons/fa";
+import { SubmitionModal } from "../components/SubmitionModal";
 const Admin = () => {
     const [submissions, setSubmissions] = useState([]);
     const [secret, setSecret] = useState("");
     const [tempSecret, setTempSecret] = useState("");
     const [loading, setLoading] = useState(false);
     const [teams, setTeams] = useState([]);
+    const [selectedSubmission, setSelectedSubmission] = useState(null);
+
     useEffect(() => {
         if (!secret) return;
         setLoading(true);
@@ -88,7 +91,7 @@ const Admin = () => {
     };
 
     return (
-        <div className="w-full h-screen flex items-center justify-evenly gap-4 p-4">
+        <div className="w-full h-screen flex items-center justify-evenly gap-4 p-4 max-md:flex-col max-md:justify-center max-md:items-center">
             {secret === "" ? (
                 <div className="flex flex-col gap-2">
                     <input
@@ -108,6 +111,16 @@ const Admin = () => {
             ) : (
                 <>
                     <div className="w-fit h-2/3 flex flex-col items-center justify-start gap-4 overflow-auto">
+                        {selectedSubmission && (
+                            <SubmitionModal
+                                isOpen={true}
+                                onClose={() => setSelectedSubmission(null)}
+                                score={selectedSubmission.score}
+                                submissionId={selectedSubmission.id}
+                                submissionTeam={selectedSubmission.team_id}
+                                code={selectedSubmission.code}
+                            />
+                        )}
                         <h2 className="text-xl font-bold mb-4">Submissions</h2>
                         {loading ? (
                             <p className="text-gray-500">
@@ -123,6 +136,9 @@ const Admin = () => {
                                     <div
                                         key={sub.id}
                                         className="flex items-center justify-between p-4 bg-[#101928] shadow rounded-lg hover:bg-[#1a1f2b] transition duration-200"
+                                        onClick={() => {
+                                            setSelectedSubmission(sub);
+                                        }}
                                     >
                                         <div className="flex-1">
                                             <span className="font-medium">
