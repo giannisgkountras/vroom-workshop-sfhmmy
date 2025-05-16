@@ -9,7 +9,7 @@ const PoweredByVroom = () => {
                 <h1 className="text-white">
                     Powered by{" "}
                     <a
-                        href="https://vroom.web.auth.gr//"
+                        href="https://vroom.web.auth.gr/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-purple-400 hover:text-pink-700"

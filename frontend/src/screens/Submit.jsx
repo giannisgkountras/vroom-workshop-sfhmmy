@@ -120,7 +120,7 @@ const Submit = () => {
                         </div>
 
                         <button
-                            className={`mt-4 p-2 text-white rounded-lg font-bold flex justify-center items-center 
+                            className={`mt-4 p-2 z-20 text-white rounded-lg font-bold flex justify-center items-center 
                                 ${
                                     loading
                                         ? "bg-[#111828] cursor-not-allowed"
