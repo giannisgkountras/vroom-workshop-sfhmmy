@@ -7,12 +7,13 @@ from jinja2 import Environment, FileSystemLoader
 import time
 import tempfile
 import subprocess
+import re
 import asyncio
 import os
 from models import Team, Base, CodeSubmission
 import traceback
 from database import SessionLocal, engine
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 
@@ -53,6 +54,17 @@ def get_admin_api_key(api_key_header: str = Security(api_key_header)) -> str:
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing API Key"
     )
+
+
+def compute_score(time_taken, path_length, time_weight=0.6, length_weight=0.4):
+    # Prevent division by zero
+    time_component = 1 / (time_taken + 1e-5)
+    length_component = 1 / (path_length + 1e-5)
+
+    total_score = (time_component * time_weight) + (length_component * length_weight)
+
+    # Scale to 0–10000
+    return round(total_score * 10000)
 
 
 class RegisterRequest(BaseModel):
@@ -177,8 +189,31 @@ async def submit_code(
         end_time = time.time()
 
         # 4. Persist to DB
+
+        match = re.search(
+            r"PATH-LENGTH\s*-\s*(\d+)", result_stdout
+        )  # Regex for finding path length
+        if match:
+            path_length = int(match.group(1))  # Extract the path length
+            print(path_length)  # Output: 158
+
+        # If not match, we have invalid result
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid output format. Expected 'PATH-LENGTH - <number>'",
+            )
+
         duration = round(end_time - start_time, 3)
-        submission = CodeSubmission(team_id=req.teamID, time_to_run=duration)
+
+        score = compute_score(duration, path_length)
+        submission = CodeSubmission(
+            team_id=req.teamID,
+            time_to_run=duration,
+            path_length=path_length,
+            score=score,
+            code=req.code,
+        )
         db.add(submission)
         db.commit()
         db.refresh(submission)
@@ -190,7 +225,7 @@ async def submit_code(
             image_data = open(image_path, "rb").read()
 
         print(
-            f"Received code from team {req.teamID} with submission id {submission.id} and duration {duration} seconds"
+            f"Received code from team {req.teamID} with submission id {submission.id}, duration {duration} seconds, path length {path_length}, score {score}"
         )
         print(req.code)
         return {
@@ -199,6 +234,8 @@ async def submit_code(
             "submission_id": submission.id,
             "output": result_stdout,
             "image": image_data.decode("latin1") if image_data else "",
+            "path_length": path_length,
+            "score": score,
         }
 
     except HTTPException as he:
@@ -220,26 +257,26 @@ def get_leaderboard(
     api_key: str = Security(get_api_key),
 ):
     # Query for the fastest time for each team
-    fastest_times = (
+    best_scores = (
         db.query(
             Team.name.label("team_name"),
-            func.min(CodeSubmission.time_to_run).label("fastest_time"),
+            func.max(CodeSubmission.score).label("best_score"),
         )
         .join(CodeSubmission, CodeSubmission.team_id == Team.id)
         .group_by(Team.id)  # Grouping by team_id to get the fastest time for each team
-        .order_by("fastest_time")  # Ordering by fastest time (ascending)
+        .order_by(desc("best_score"))  # Ordering by fastest time (descending)
         .all()
     )
 
-    if not fastest_times:
+    if not best_scores:
         raise HTTPException(status_code=404, detail="No submissions found")
 
     # Return the result
     return {
         "status": "success",
         "leaderboard": [
-            {"team_name": team_name, "fastest_time": fastest_time}
-            for team_name, fastest_time in fastest_times
+            {"team_name": team_name, "best_score": best_score}
+            for team_name, best_score in best_scores
         ],
     }
 
@@ -254,21 +291,21 @@ def get_team_fastest_time(
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    fastest_submission = (
+    best_submission = (
         db.query(CodeSubmission)
         .filter(CodeSubmission.team_id == team_id)
-        .order_by(CodeSubmission.time_to_run.asc())
+        .order_by(CodeSubmission.score.desc())
         .first()
     )
 
-    if not fastest_submission:
+    if not best_submission:
         return JSONResponse(
             status_code=200,
             content={
                 "status": "success",
                 "team_id": team_id,
                 "team_name": team.name,
-                "fastest_time": None,
+                "best_score": None,
                 "message": "No submissions yet for this team.",
             },
         )
@@ -277,7 +314,7 @@ def get_team_fastest_time(
         "status": "success",
         "team_id": team_id,
         "team_name": team.name,
-        "fastest_time": fastest_submission.time_to_run,
+        "best_score": best_submission.score,
     }
 
 

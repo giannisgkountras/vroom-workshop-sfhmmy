@@ -15,3 +15,6 @@ class CodeSubmission(Base):
     id = Column(Integer, primary_key=True, index=True)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     time_to_run = Column(Integer, nullable=False)
+    path_length = Column(Integer, nullable=False)
+    score = Column(Integer, nullable=False)
+    code = Column(String, nullable=False)
