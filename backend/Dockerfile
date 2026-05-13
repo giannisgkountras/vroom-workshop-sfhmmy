@@ -1,6 +1,5 @@
 # Use official Python image
-FROM python:3.11-slim
-
+FROM python:3.11-slim-bullseye
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \        
